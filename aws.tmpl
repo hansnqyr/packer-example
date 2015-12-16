@@ -1,0 +1,36 @@
+{
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "region": "eu-west-1",
+      "source_ami": "ami-bff32ccc",
+      "instance_type": "t2.micro",
+      "ssh_username": "ec2-user",
+      "ssh_keypair_name": "{{user `ssh_keypair_name`}}",
+      "ssh_private_key_file": "{{user `ssh_private_key_file`}}",
+      "ssh_pty": true,
+      "ami_name": "packer-quick-start {{timestamp}}",
+      "tags": {
+        "owner": "{{user `owner`}}",
+        "project": "packer exemplar"
+      }
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell-local",
+      "command": "berks vendor cookbooks"
+    },
+    {
+      "type": "chef-solo",
+      "execute_command": "{{if .Sudo}}sudo {{end}}chef-client -z --no-color -c {{.ConfigPath}} -j {{.JsonPath}}",
+      "cookbook_paths": ["cookbooks"],
+      "run_list": ["ntp"]
+    }
+  ],
+  "variables": {
+    "ssh_keypair_name": "{{env `SSH_KEY_NAME`}}",
+    "ssh_private_key_file": "{{env `SSH_KEY_FILE`}}",
+    "owner": "{{env `OWNER`}}"
+  }
+}
